@@ -4,6 +4,7 @@ class Solution {
         for (int i = 2; i <= n; i++) {
             if (n == Math.pow(i, 2)) {
                 answer = 1;
+                break;
             }
         }
         return answer;
