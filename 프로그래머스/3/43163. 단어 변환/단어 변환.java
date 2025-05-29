@@ -1,65 +1,72 @@
 import java.util.*;
 
 class Solution {
-    static Map<String, List<String>> sentences = new HashMap<>(); // 그래프를 여기에 보관
-
-    // 두 단어가 딱 한글자만 다른지 체크한다. (두 단어의 길이는 무조건 같다)
-    public static boolean isDifferenceOneWord(String word1, String word2) {
-        int len1 = word1.length();
+    static Map<String, List<String>> graph = new HashMap<>();
+    
+    //먼저 두 노드가 연결될 수 있는 지 판단한다
+    public static boolean isDifferenceOne(String node1, String node2) {
         int count = 0;
-        for (int i = 0; i < len1; i++) {
-            if (word1.charAt(i) == word2.charAt(i)) {
+        for (int i = 0; i < node1.length(); i++) {
+            if (node1.charAt(i) == node2.charAt(i)) {
                 count++;
             }
         }
-        return count == len1 - 1; // 한글자만 달라야 true반환한다.
+        int differeceOne = node1.length() - count;  // 전체길이에서 같은 녀석들의 개수를 뺀다. 그놈이 1이면 정답임
+        return differeceOne == 1;
     }
-
+    
+    // 그래프 그리기 
     public static void makeGraph(String begin, String[] words) {
-        List<String> list = new ArrayList<>();
-        list.add(begin);
-        for (String word : words) {
-            list.add(word);
+        String[] wordsArr = new String[words.length + 1];
+        wordsArr[0] = begin;
+        for (int i = 0; i < words.length; i++) {
+            wordsArr[i + 1] = words[i];
         }
-
-        for (int i = 0; i < list.size(); i++) {
-            String word1 = list.get(i);
-            List<String> listLittle = new ArrayList<>();
-            for (int j = 0; j < list.size(); j++) {
-                String word2 = list.get(j);
-                if (isDifferenceOneWord(word1, word2)) {
-                    listLittle.add(word2);
-                }
+        
+        for (int i = 0; i < wordsArr.length; i++) {
+            List<String> list = new ArrayList<>();
+            String key = wordsArr[i];
+            for (int j = 0; j < wordsArr.length; j++) {
+                String value = wordsArr[j];
+                if (key != value) {
+                    if (isDifferenceOne(key, value)) {
+                        list.add(value);
+                    }
+                } 
             }
-            sentences.put(word1, listLittle);
+            graph.put(key, list);
         }
     }
     
     public int solution(String begin, String target, String[] words) {
         int answer = 0;
         makeGraph(begin, words);
-
-        // BFS코드 시작
+        
         Queue<String> queue = new ArrayDeque<>();
+        Map<String, Integer> distanceWithVisited = new HashMap<>();
+        distanceWithVisited.put(begin, 0);
+        for (int i = 0; i < words.length; i++) {
+            distanceWithVisited.put(words[i], 0);
+        }
+        distanceWithVisited.put(target, 0);  // 목표지점도 넣어주는 것 잊지 말기
+        
+        // begin을 넣어서 시작한다. distanceWithVisited는 이미 0이있기에 문제없다.
         queue.add(begin);
-
-        Map<String, Integer> distances = new HashMap<>();
-        distances.put(begin, 0);
-        for (String word : words) { distances.put(word, 0); }
-        distances.put(target, 0);
-
-        while (!queue.isEmpty()) {
-            String currentWord = queue.poll();
-
-            if (currentWord.equals(target)) {
-                answer = distances.get(currentWord);
+        
+        while(!queue.isEmpty()) {
+            String currentNode = queue.poll();
+            System.out.println("현재노드: " + currentNode);
+            if (currentNode.equals(target)) {
+                answer = distanceWithVisited.get(currentNode);
                 break;
             }
-
-            for (String nextWord : sentences.get(currentWord)) {
-                if (distances.get(nextWord) == 0) { // 방문하지 않은 노드니까 추가한다.
-                    queue.add(nextWord);
-                    distances.put(nextWord, distances.get(currentWord) + 1);
+            
+            for (String nextNode : graph.get(currentNode)) {
+                System.out.println("자식노드: " + nextNode);
+                // 아직 방문을 안했으면
+                if (distanceWithVisited.get(nextNode) == 0) {
+                    queue.add(nextNode);
+                    distanceWithVisited.put(nextNode, distanceWithVisited.get(currentNode) + 1);
                 }
             }
         }
